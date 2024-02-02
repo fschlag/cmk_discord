@@ -28,6 +28,11 @@ _(unfortunately only as a gist so I couldn't extend it via PR)_
 * Supports comments (e.g. for acknowledgements or downtimes)
 * Link to failed service/host
 
+## Examples
+
+![Example: Host down](images/example-1.png)
+![Example: Filesystem Recovery](images/example-2.png)
+
 ## Usage
 
 * Download the [latest release](https://github.com/fschlag/cmk_discord/releases)
