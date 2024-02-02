@@ -38,6 +38,7 @@ _(unfortunately only as a gist so I couldn't extend it via PR)_
 * Download the [latest release](https://github.com/fschlag/cmk_discord/releases)
 * On your Checkmk server, login to the instance you want to install the plugin (`sudo su - <instance name>`)
 * Copy `cmk_discord.py` to `~/local/share/check_mk/notifications`
+* Make sure `cmk_discord.py` is executable: `chmod +x ~/local/share/check_mk/notifications/cmk_discord.py`
 * In your Checkmk ui, go to Setup --> Notifications --> Add rule
     * As "Notification Method" select "Discord Notification"
     * **First parameter** should be the Discord Webhook URL (mandatory)
