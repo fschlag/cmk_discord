@@ -2,8 +2,8 @@
 # Discord Notification
 
 # https://github.com/fschlag/cmk_discord
-# Version: 0.0.1
-# Release date: 2024-02-02
+# Version: DEVELOPMENT-SNAPSHOT
+# Release date: DEVELOPMENT-SNAPSHOT
 
 import os
 import sys
