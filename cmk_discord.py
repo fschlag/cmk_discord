@@ -3,7 +3,7 @@
 
 # https://github.com/fschlag/cmk_discord
 # Contributor: https://github.com/zuulmaker
-# Version: V0.2
+# Version: V0.0.2
 # Release date: DEVELOPMENT-SNAPSHOT
 
 import os
@@ -32,7 +32,7 @@ ALERT_COLORS = {
 }
 
 
-required_fields = ["NOTIFICATIONTYPE", "HOSTNAME", "SERVICESTATE", "SERVICEDESC"]
+required_fields = ["NOTIFICATIONTYPE", "HOSTNAME", "SERVICESTATE", "SERVICEDESC"] # required fields in environment variables to prevent Errors
 
 
 def emoji_for_notification_type(notification_type: str):
@@ -62,8 +62,9 @@ def build_service_embeds(ctx, site_url, timestamp):
         ctx.get("SERVICEOUTPUT"),
     )
     if len(ctx.get("NOTIFICATIONCOMMENT")) > 0:
-        #description = "\n\n".join([description, ctx.get("NOTIFICATIONCOMMENT")])
-        description = truncate(ctx.get("SERVICEOUTPUT", ""), 1024)
+        description = "\n\n".join([description, ctx.get("NOTIFICATIONCOMMENT")])
+        if len(description) > 1024:
+            description = truncate(ctx.get("SERVICEOUTPUT", ""), 1024) #discord embeds cap at a maximum of 1024 chars
     embed = {
         "title": "%s%s: %s"
                  % (
@@ -96,6 +97,8 @@ def build_host_embeds(ctx, site_url, timestamp):
     )
     if len(ctx.get("NOTIFICATIONCOMMENT")) > 0:
         description = "\n\n".join([description, ctx.get("NOTIFICATIONCOMMENT")])
+        if len(description) > 1024:
+            description = truncate(ctx.get("HOSTSTATE", ""), 1024) #discord embeds cap at a maximum of 1024 chars
     embed = {
         "title": "%s%s: Host: %s"
                  % (
@@ -117,7 +120,7 @@ def build_embeds(ctx, site_url):
     try:
         timestamp = str(datetime.datetime.fromisoformat(ctx["SHORTDATETIME"]).astimezone())
     except ValueError:
-        timestamp = str(datetime.datetime.now().astimezone())
+        timestamp = str(datetime.datetime.now().astimezone()) # capture time errors
     return (
         build_service_embeds(ctx, site_url, timestamp)
         if ctx.get("WHAT") == "SERVICE"
@@ -151,9 +154,7 @@ def post_webhook(url, json):
         sys.exit(1)
 
 def truncate(text, max_length):
-    return text if len(text) <= max_length else text[:max_length - 3] + "..."
-
-
+    return text if len(text) <= max_length else text[:max_length - 3] + "..." # truncate function to shorten discord embed messages
 
 def main():
     ctx = build_context()
@@ -167,24 +168,24 @@ def main():
     if not webhook_url:
         sys.stderr.write("Empty webhook url given as parameter 1")
         sys.exit(2)
-    if not webhook_url.startswith("https://discord.com")or webhook_url.startswith("https://discordapp.com"):
+    if not webhook_url.startswith("https://discord.com")or webhook_url.startswith("https://discordapp.com"): # both webhooks are still in use, so check for both possibilities
         sys.stderr.write(
             "Invalid Discord webhook url given as first parameter (not starting with https://discord.com or https://discordapp.com )"
         )
     if site_url and not site_url.startswith("http"):
         sys.stderr.write(
-            "Invalid site url given as second parameter (not starting with http): %s"
+            "Invalid site url given as second parameter (not starting with http): %s" # home server can be in use without tls, maybe cheking for both
             % site_url
         )
         sys.exit(2)
 
     if os.getenv("DEBUG"):
-        print(json.dumps(ctx, indent=4))
+        print(json.dumps(ctx, indent=4)) # Debugging possibilities with environment variable DEBUG
 
     webhook_content = build_webhook_content(ctx, site_url)
 
     if os.getenv("DEBUG"):
-        print(json.dumps(webhook_content, indent=4))
+        print(json.dumps(webhook_content, indent=4)) #Debugging possibilities with environment variable DEBUG
         
     post_webhook(webhook_url, webhook_content)
 
