@@ -2,13 +2,15 @@
 # Discord Notification
 
 # https://github.com/fschlag/cmk_discord
-# Version: DEVELOPMENT-SNAPSHOT
+# Contributor: https://github.com/zuulmaker
+# Version: V0.2
 # Release date: DEVELOPMENT-SNAPSHOT
 
 import os
 import sys
 import datetime
 import requests
+import json
 from http import HTTPStatus
 
 DISCORD_COLORS = {
@@ -28,6 +30,9 @@ ALERT_COLORS = {
     "UNKNOWN": DISCORD_COLORS["Orange"],
     "UNREACHABLE": DISCORD_COLORS["DarkGrey"],
 }
+
+
+required_fields = ["NOTIFICATIONTYPE", "HOSTNAME", "SERVICESTATE", "SERVICEDESC"]
 
 
 def emoji_for_notification_type(notification_type: str):
@@ -57,7 +62,8 @@ def build_service_embeds(ctx, site_url, timestamp):
         ctx.get("SERVICEOUTPUT"),
     )
     if len(ctx.get("NOTIFICATIONCOMMENT")) > 0:
-        description = "\n\n".join([description, ctx.get("NOTIFICATIONCOMMENT")])
+        #description = "\n\n".join([description, ctx.get("NOTIFICATIONCOMMENT")])
+        description = truncate(ctx.get("SERVICEOUTPUT", ""), 1024)
     embed = {
         "title": "%s%s: %s"
                  % (
@@ -108,7 +114,10 @@ def build_host_embeds(ctx, site_url, timestamp):
 
 
 def build_embeds(ctx, site_url):
-    timestamp = str(datetime.datetime.fromisoformat(ctx["SHORTDATETIME"]).astimezone())
+    try:
+        timestamp = str(datetime.datetime.fromisoformat(ctx["SHORTDATETIME"]).astimezone())
+    except ValueError:
+        timestamp = str(datetime.datetime.now().astimezone())
     return (
         build_service_embeds(ctx, site_url, timestamp)
         if ctx.get("WHAT") == "SERVICE"
@@ -129,7 +138,7 @@ def build_context():
         var[7:]: value
         for (var, value) in os.environ.items()
         if var.startswith("NOTIFY_")
-    }
+        }
 
 
 def post_webhook(url, json):
@@ -141,20 +150,27 @@ def post_webhook(url, json):
         )
         sys.exit(1)
 
+def truncate(text, max_length):
+    return text if len(text) <= max_length else text[:max_length - 3] + "..."
+
+
 
 def main():
     ctx = build_context()
     webhook_url = ctx.get("PARAMETER_1")
     site_url = ctx.get("PARAMETER_2")
+    for field in required_fields:
+        if field not in ctx:
+            sys.stderr.write(f"Missing required field: {field}\n")
+            sys.exit(2)
 
     if not webhook_url:
         sys.stderr.write("Empty webhook url given as parameter 1")
         sys.exit(2)
-    if not webhook_url.startswith("https://discord.com"):
+    if not webhook_url.startswith("https://discord.com")or webhook_url.startswith("https://discordapp.com"):
         sys.stderr.write(
-            "Invalid Discord webhook url given as first parameter (not starting with https://discord.com )"
+            "Invalid Discord webhook url given as first parameter (not starting with https://discord.com or https://discordapp.com )"
         )
-        sys.exit(2)
     if site_url and not site_url.startswith("http"):
         sys.stderr.write(
             "Invalid site url given as second parameter (not starting with http): %s"
@@ -162,9 +178,16 @@ def main():
         )
         sys.exit(2)
 
+    if os.getenv("DEBUG"):
+        print(json.dumps(ctx, indent=4))
+
     webhook_content = build_webhook_content(ctx, site_url)
 
+    if os.getenv("DEBUG"):
+        print(json.dumps(webhook_content, indent=4))
+        
     post_webhook(webhook_url, webhook_content)
+
 
 
 if __name__ == "__main__":
