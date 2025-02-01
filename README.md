@@ -1,5 +1,13 @@
 # cmk_discord - Checkmk Discord Notifications
 
+## :warning: Attention
+
+I currently don't have time to work on this project. At the moment I don't even have a CheckMK instance running anywhere. Therefore, I cannot do any releases.
+
+**If someone wants to take over the plugin, please let me know and I transfer the ownership.** 
+
+---
+
 [![GitHub Release](https://img.shields.io/github/v/release/fschlag/cmk_discord)](https://github.com/fschlag/cmk_discord/releases)
 ![Static Badge](https://img.shields.io/badge/Tested%20with%20Checkmk-2.2.0p21-neon)
 [![Static Badge](https://img.shields.io/badge/Link%20to-Checkmk%20Exchange-green)](https://exchange.checkmk.com/p/discord)
